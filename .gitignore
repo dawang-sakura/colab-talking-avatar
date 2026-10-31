@@ -1,0 +1,14 @@
+# 运行产物
+output/
+*.mp4
+*.wav
+*.flac
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# 系统文件
+.DS_Store
+Thumbs.db
