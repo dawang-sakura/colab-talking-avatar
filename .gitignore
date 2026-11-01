@@ -2,6 +2,7 @@
 output/
 *.mp4
 *.wav
+!voices/*.wav
 *.flac
 
 # Python / Jupyter

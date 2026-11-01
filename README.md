@@ -15,11 +15,11 @@
 ## 流程
 
 ```
-① 设置（文稿、音色描述、角色图）
+① 设置（文稿、声音、角色图）
         │
         ▼
 ③ 配音：VoxCPM2
-   音色设计（用文字描述造一把声音，只做一次，存成参考音）
+   声音包参考音（默认）；或音色设计（用文字描述造一把声音，只做一次，存成参考音）
    → 逐句可控克隆（每句 ≤80 字，超过自动切开）
    → 句间插入停顿，接成一条音轨 voice.wav
    → 删除模型、释放显存
@@ -41,9 +41,10 @@
 | 变量 | 默认值 | 说明 |
 |---|---|---|
 | `SCRIPT` | 3 句示例文稿 | 一行一句；每句最多 80 字，超过会在标点处自动切开（VoxCPM2 单次太长容易啸叫或音色漂移）。句首可以加括号写语气，例如 `(轻松地)大家好` |
-| `VOICE_DESC` | 年轻女性、清亮自然… | 音色设计用的文字描述（性别、年龄、音色、语速、语气） |
+| `VOICE` | `新闻女主播` | 下拉选单选声音包里的声音（见下方「声音包」，可先试听）；选「自定义（用 VOICE_DESC）」改用文字描述做音色设计。开启声音克隆时不使用 |
+| `VOICE_DESC` | 年轻女性、清亮自然… | 音色设计用的文字描述（性别、年龄、音色、语速、语气）；`VOICE` 选「自定义」时才使用 |
 | `PAUSE_SEC` | `0.4` | 句与句之间的停顿秒数 |
-| `SEED` | `42` | 随机种子。音色设计每次结果不同，对声音不满意就换个数字重跑 |
+| `SEED` | `42` | 随机种子。音色设计每次结果不同，对声音不满意就换个数字重跑；用声音包时音色由参考音固定，`SEED` 只影响每句的细微差异和对嘴画面 |
 | `IMAGE_PATH` | `examples/host.png` | 角色图。换成自己的图：上传到 Colab 左侧「文件」面板（会放在 `/content/`），改成 `/content/你的图.png` |
 | `PROMPT` | 通用英文描述 | 对嘴画面的英文描述，可补充角色外观（发型、服装），减少配件消失 |
 | `LOW_VRAM` | `False` | 对嘴阶段爆显存时改成 `True`（ComfyUI `--novram`，更慢） |
@@ -52,6 +53,23 @@
 角色图建议：竖图、正面、闭嘴、脸够大、手不入镜。图会先裁成 480:832 比例（保留上方、裁掉下方），再缩成 480×832。
 
 示例文稿也放在 [`examples/script.txt`](examples/script.txt)。
+
+## 声音包
+
+`VOICE` 下拉选单里的 10 把声音。**全部是用 VoxCPM2 音色设计（文字描述）生成的虚构 AI 声音，不对应任何真实人物。** 参考音放在 [`voices/`](voices/)，描述原文见 [`voices/voices.json`](voices/voices.json)。选了声音包后，句首括号的语气照样可以用。
+
+| 声音 | 简介 | 试听 |
+|---|---|---|
+| 新闻女主播 | 女，30 岁左右。字正腔圆、端庄亲切，像电视台晚间新闻主播 | [试听](voices/samples/f1_news.mp3) |
+| 温柔知性 | 女，28 岁左右。柔和温润、带一点气声，像深夜电台主持人 | [试听](voices/samples/f2_gentle.mp3) |
+| 元气少女 | 女，19 岁左右。明亮清甜、活泼带笑，像有朝气的校园学妹 | [试听](voices/samples/f3_genki.mp3) |
+| 甜美邻家 | 女，20 岁出头。甜美软糯、带点撒娇，像邻家女孩跟朋友聊天 | [试听](voices/samples/f4_sweet.mp3) |
+| 成熟御姐 | 女，30 岁出头。低沉有磁性、自信慵懒，气场强但不凶 | [试听](voices/samples/f5_queen.mp3) |
+| 热情带货 | 女，26 岁左右。清亮有穿透力、兴奋急切，像直播间带货主播 | [试听](voices/samples/f6_live.mp3) |
+| 沉稳旁白 | 男，40 岁左右。浑厚低沉、沉着有故事感，像纪录片旁白 | [试听](voices/samples/m1_narrator.mp3) |
+| 阳光青年 | 男，23 岁左右。清爽干净、阳光真诚，像人缘很好的学长 | [试听](voices/samples/m2_sunny.mp3) |
+| 亲切大叔 | 男，50 岁左右。温厚略沙哑、随和幽默，像楼下爱聊天的老大哥 | [试听](voices/samples/m3_uncle.mp3) |
+| 激情解说 | 男，30 岁左右。高亢有力、激昂兴奋，像体育或电竞比赛解说 | [试听](voices/samples/m4_hype.mp3) |
 
 ## 声音克隆（默认关闭）
 
@@ -65,7 +83,7 @@
      - **留空** → 可控克隆：声音接近参考录音，句首括号的语气可以用。
      - **填参考录音的逐字稿**（必须一字不差）→ 极致克隆：最像本人，但**不能**加语气括号（VoxCPM 官方不允许语气指令和 `prompt_text` 一起用），文稿里有语气括号会直接报错。
    - `I_HAVE_CONSENT = True`：表示你确认录音是你本人、或已取得当事人同意。**没改成 True 就开启克隆，notebook 会直接报错停止。**
-3. 开启克隆后 `VOICE_DESC` 不再使用。
+3. 开启克隆后 `VOICE` 和 `VOICE_DESC` 都不再使用。
 
 ## 使用规范
 
@@ -103,7 +121,7 @@
 多半是系统内存或显存不够，文稿越长越容易遇到。先缩短文稿，或开 `LOW_VRAM = True`；详细原因看左侧文件面板的 `/content/comfyui.log`。
 
 **声音不满意？**
-换 `SEED` 或改 `VOICE_DESC` 重跑。音色设计本来就每次不同。
+先在「声音包」试听，`VOICE` 换一把重跑；都不合适就选「自定义（用 VOICE_DESC）」，改 `VOICE_DESC` 或换 `SEED` 重跑（音色设计本来就每次不同）。
 
 **用完了怎么关？**
 「代码执行程序 → 断开连接并删除运行时」。第一次点可能先弹出警告，确认后要再点一次删除。
@@ -124,7 +142,7 @@
 | Wan2.1 VAE bf16 | 视频编解码 | HF `Kijai/WanVideo_comfy` | 托管仓库：**未确认**（模型卡未标授权）；上游 Wan2.1：Apache-2.0 | <https://huggingface.co/Kijai/WanVideo_comfy>、<https://github.com/Wan-Video/Wan2.1/blob/main/LICENSE.txt> |
 | lightx2v I2V 480P 步数/CFG 蒸馏 LoRA rank64 | 加速（6 步） | HF `Kijai/WanVideo_comfy` | 托管仓库：**未确认**（模型卡未标授权）；上游 lightx2v 模型：Apache-2.0（按文件名对应，未逐字节核对） | <https://huggingface.co/Kijai/WanVideo_comfy>、<https://huggingface.co/lightx2v/Wan2.1-I2V-14B-480P-StepDistill-CfgDistill-Lightx2v>、<https://github.com/ModelTC/LightX2V/blob/main/LICENSE> |
 
-示例图 `examples/host.png` **由 AI 生成，为虚构人物，非真实人物**（说明见 [`examples/README.md`](examples/README.md)）。
+示例图 `examples/host.png` **由 AI 生成，为虚构人物，非真实人物**（说明见 [`examples/README.md`](examples/README.md)）。声音包 `voices/` 的 10 把声音由 VoxCPM2 音色设计生成，同样是虚构声音。
 
 ## 致谢
 
