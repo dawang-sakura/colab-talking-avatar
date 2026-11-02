@@ -10,7 +10,7 @@
 
 1. 点上方 **Open in Colab** 徽章，在 Colab 菜单「代码执行程序 → 更改运行时类型」（英文界面：Runtime → Change runtime type）选 **L4 GPU**。
 2. 「代码执行程序 → 全部运行」（英文界面：Runtime → Run all），弹出「此笔记本不是由 Google 创作」时点「仍然运行」。不改任何设置会用示例图和示例文稿。
-3. 等浏览器自动下载 `talking_avatar.mp4`（默认带字幕）和字幕文件 `talking_avatar.srt`，然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
+3. 等浏览器自动下载 `talking_avatar.mp4`（默认带字幕）和字幕文件 `talking_avatar.srt`（开了去背时还有透明背景的 `talking_avatar_alpha.webm`），然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
 
 ## 流程
 
@@ -27,10 +27,16 @@
         │
         ▼
 ④ 对嘴：ComfyUI v0.43.0 + InfiniteTalk（Wan2.1 I2V 14B 480P）
-   角色图裁成 480×832 → 每段 81 帧、重叠 9 帧往后延伸 → 长度跟配音走
+   角色图按 ASPECT／CROP_POS 裁切缩放（默认 9:16 的 480×832）
+   （BG_REMOVE＝绿幕时：先用 BiRefNet 把背景换成纯绿，释放显存后才启动 ComfyUI）
+   → 每段 81 帧、重叠 9 帧往后延伸 → 长度跟配音走
         │
         ▼
 ⑤ 合成：画面 + 原始配音（AAC）→ 烧进字幕（ASS＋ffmpeg）→ /content/output/talking_avatar.mp4 ＋ talking_avatar.srt → 自动下载
+        │
+        ▼
+⑤-2 去背输出（BG_REMOVE 不是「关」时）：绿幕＝ffmpeg chromakey＋despill；逐帧＝每帧 BiRefNet
+   → talking_avatar_alpha.webm（VP9＋透明通道，不烧字幕）→ 自动下载
         │
         ▼
 ⑥ 只重做字幕（换字幕样式时才用；「全部运行」时会自动跳过）
@@ -51,11 +57,14 @@
 | `SEED` | `42` | 随机种子。音色设计每次结果不同，对声音不满意就换个数字重跑；用声音包时音色由参考音固定，`SEED` 只影响每句的细微差异和对嘴画面 |
 | `IMAGE_PATH` | `examples/host.png` | 角色图。换成自己的图：上传到 Colab 左侧「文件」面板（会放在 `/content/`），改成 `/content/你的图.png` |
 | `PROMPT` | 通用英文描述 | 对嘴画面的英文描述，可补充角色外观（发型、服装），减少配件消失 |
+| `ASPECT` | `9:16 竖屏短视频（480×832）` | 画面比例下拉选单，见下方「画面比例」 |
+| `CROP_POS` | `偏上（保留头部）` | 角色图比例和画面不同时裁掉哪一边：偏上、置中、偏左、偏右，见下方「画面比例」 |
+| `BG_REMOVE` | `关` | 去背：关、绿幕（推荐）、逐帧，见下方「去背」 |
 | `LOW_VRAM` | `False` | 对嘴阶段爆显存时改成 `True`（ComfyUI `--novram`，更慢） |
 | `SUBTITLE` 等 | 开启 | 字幕开关、字体、字号、效果、位置、描边、颜色，见下方「字幕」 |
 | `ENABLE_VOICE_CLONE` 等 | 关闭 | 见下方「声音克隆」 |
 
-角色图建议：竖图、正面、闭嘴、脸够大、手不入镜。图会先裁成 480:832 比例（保留上方、裁掉下方），再缩成 480×832。
+角色图建议：比例接近 `ASPECT` 选的画面（默认竖图）、正面、闭嘴、脸够大、手不入镜。图会先按 `CROP_POS` 裁成画面的比例（默认保留上方、裁掉下方），再缩成画面尺寸（默认 480×832）。
 
 示例文稿也放在 [`examples/script.txt`](examples/script.txt)。
 
@@ -145,6 +154,47 @@
 
 ③-2 会检查字体有没有收录文稿里的每个字，缺字时会列出来（烧进画面时那些字会被换成别的字体或显示成方框）。思源黑体收的字最全。
 
+## 画面比例
+
+在 ① 设置格用 `ASPECT` 下拉选单选。像素总量都接近 480×832（对嘴底模是 480P），长宽都是 16 的倍数。**作者只实测过 9:16，其他比例未实测。**
+
+| `ASPECT` | 画面尺寸 | 常见用途 |
+|---|---|---|
+| 9:16 竖屏短视频（默认） | 480×832 | 短视频、限时动态 |
+| 16:9 横屏视频 | 832×480 | 横屏视频 |
+| 1:1 方形帖子 | 624×624 | 方形帖子 |
+| 4:5 Instagram 竖版帖子 | 576×720 | Instagram 竖版帖子 |
+| 3:4 小红书竖版 | 576×768 | 小红书 |
+
+角色图比例和画面不同时，先裁切再缩放。裁切只会裁一个方向（图太宽裁左右、太高裁上下），`CROP_POS` 决定保留哪里：
+
+| `CROP_POS` | 图太高（裁上下） | 图太宽（裁左右） |
+|---|---|---|
+| 偏上（保留头部，默认） | 保留上方 | 保留中间 |
+| 置中 | 保留中间 | 保留中间 |
+| 偏左 | 保留上方 | 保留左边 |
+| 偏右 | 保留上方 | 保留右边 |
+
+字幕的字号、边距、一行放几个字都按实际画面尺寸推算，换比例不用另外调。对嘴做完之后再改 `ASPECT` 不会生效（⑥ 只重做字幕，照现有视频的尺寸），要换比例得重新全部运行。
+
+## 去背（默认关闭）
+
+想把主播放进别的模板合成（例如直播版面）时用。① 设置格 `BG_REMOVE` 选「绿幕（推荐）」或「逐帧」后，除了一般的 `talking_avatar.mp4`，⑤-2 会再输出一份透明背景的 **`talking_avatar_alpha.webm`**：
+
+- VP9 视频＋透明通道（`yuva420p`）＋原始配音（Opus）。
+- **不烧字幕**（需要字幕可以在模板里另外加，或用 `talking_avatar.srt`）。字幕照常烧在 `talking_avatar.mp4` 里，⑥ 只重做字幕也照常能用。
+- 透明效果要用支持透明 WebM 的软件才看得到；有些播放器会显示成黑底。
+
+去背工具是 [BiRefNet](https://github.com/ZhengPeng7/BiRefNet)（MIT），权重运行时从 Hugging Face 官方仓库 `ZhengPeng7/BiRefNet` 下载（commit 已固定）。BiRefNet 和对嘴模型不会同时占显存。
+
+| `BG_REMOVE` | 做法 | 优缺点 |
+|---|---|---|
+| 关（默认） | 不去背 | — |
+| 绿幕（推荐） | ④-3 对嘴前先用 BiRefNet 把角色图的背景换成纯绿色（用完马上释放显存）→ 对嘴 → ⑤-2 用 ffmpeg `chromakey` 扣掉绿色，再用 `despill` 压掉边缘的绿光 | 只多处理一张图。**这时 `talking_avatar.mp4` 的背景是绿色的。** 已知风险见「常见问题」 |
+| 逐帧 | 角色图照原样对嘴 → ⑤-2 先关掉 ComfyUI 释放显存，再对成品的每一帧跑 BiRefNet 得到透明遮罩 | `talking_avatar.mp4` 保留原背景；比绿幕慢（每一帧都要算），前后帧的边缘可能轻微闪动 |
+
+绿幕路线的扣色参数（`KEY_SIMILARITY`、`KEY_BLEND`、`DESPILL_MIX`）写在 ⑤-2 格开头，一般不用改。绿幕的实际色值会从第一帧的背景自动取。
+
 ## 使用规范
 
 - 只使用 **你本人**、**已取得当事人同意者**、或 **AI 生成的虚构角色** 的脸和声音。
@@ -164,6 +214,8 @@
 | 安装 ComfyUI＋下载约 30GB 模型＋启动 | 约 2.5 分钟（两次实测：28＋92＋27 秒、25＋92＋18 秒） |
 | 对嘴（21.5 秒成品，8 段） | 约 **36 分钟**，约 **0.9 计算单元** |
 | 示例文稿全程（10.88 秒成品，4 段） | 对嘴 966 秒（约 16 分钟）；从 ② 到 ⑤ 跑完共 22.2 分钟 |
+
+画面比例（9:16 以外）和去背（绿幕、逐帧）的耗时都还没实测。
 
 对嘴耗时大致跟段数成正比：第 1 段 81 帧（约 3.24 秒），之后每段多 72 帧（约 2.88 秒）。作者实测过的最长成品是 21.5 秒，更长的文稿耗时和系统内存是否足够未验证。
 
@@ -189,6 +241,12 @@
 **字幕想换样式？**
 不用重跑：改 ① 的字幕设置 → 运行 ① → 运行 ⑥（见「字幕 → 只重做字幕」）。删除运行时后就不能重做了。
 
+**去背选了「绿幕」，扣出来有绿边，或背景有一块没扣掉？**
+绿幕路线有两个已知风险（尚未实测）：对嘴模型可能让绿色背景色偏或出现阴影，导致扣不干净；发丝等半透明边缘可能带一圈绿边。遇到时在 ① 把 `BG_REMOVE` 改成「逐帧」：最干净的做法是重新全部运行；不想重跑对嘴，也可以运行 ① 后只运行 ⑤-2（拿绿底的视频逐帧去背，发丝边缘可能还带一点绿）。
+
+**透明 WebM 打开是黑底？**
+不是所有播放器都支持透明 WebM。放进支持透明视频的剪辑或合成软件里才看得到透明效果。
+
 **用完了怎么关？**
 「代码执行程序 → 断开连接并删除运行时」。第一次点可能先弹出警告，确认后要再点一次删除。
 
@@ -206,6 +264,7 @@
 | InfiniteTalk 单人 fp16 | 对嘴模型 | HF `Comfy-Org/Wan-2.1` | 托管仓库：Apache-2.0；上游 InfiniteTalk：Apache-2.0 | <https://huggingface.co/Comfy-Org/Wan-2.1>、<https://huggingface.co/MeiGen-AI/InfiniteTalk>、<https://github.com/MeiGen-AI/InfiniteTalk/blob/main/LICENSE.txt> |
 | chinese-wav2vec2-base fp16 | 音频特征 | HF `Kijai/wav2vec2_safetensors` | 托管仓库：MIT；上游：MIT | <https://huggingface.co/Kijai/wav2vec2_safetensors>、<https://huggingface.co/TencentGameMate/chinese-wav2vec2-base> |
 | Wan2.1 VAE bf16 | 视频编解码 | HF `Kijai/WanVideo_comfy` | 托管仓库：**未确认**（模型卡未标授权）；上游 Wan2.1：Apache-2.0 | <https://huggingface.co/Kijai/WanVideo_comfy>、<https://github.com/Wan-Video/Wan2.1/blob/main/LICENSE.txt> |
+| BiRefNet（代码＋权重） | 去背（`BG_REMOVE` 不是「关」时才下载） | HF `ZhengPeng7/BiRefNet` @ `e2bf8e44`（`trust_remote_code`，代码和权重都来自这个仓库） | MIT（2026-11-02 查证） | <https://huggingface.co/ZhengPeng7/BiRefNet>、<https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE> |
 | lightx2v I2V 480P 步数/CFG 蒸馏 LoRA rank64 | 加速（6 步） | HF `Kijai/WanVideo_comfy` | 托管仓库：**未确认**（模型卡未标授权）；上游 lightx2v 模型：Apache-2.0（按文件名对应，未逐字节核对） | <https://huggingface.co/Kijai/WanVideo_comfy>、<https://huggingface.co/lightx2v/Wan2.1-I2V-14B-480P-StepDistill-CfgDistill-Lightx2v>、<https://github.com/ModelTC/LightX2V/blob/main/LICENSE> |
 
 示例图 `examples/host.png` **由 AI 生成，为虚构人物，非真实人物**（说明见 [`examples/README.md`](examples/README.md)）。声音包 `voices/` 的 10 把声音由 VoxCPM2 音色设计生成，同样是虚构声音。
@@ -219,6 +278,7 @@
 - [Kijai](https://huggingface.co/Kijai)（模型格式转换与托管）、[Comfy-Org](https://huggingface.co/Comfy-Org)
 - [LightX2V](https://github.com/ModelTC/LightX2V)
 - [TencentGameMate / chinese-wav2vec2-base](https://huggingface.co/TencentGameMate/chinese-wav2vec2-base)
+- [ZhengPeng7 / BiRefNet](https://github.com/ZhengPeng7/BiRefNet)
 
 ## 授权
 
