@@ -10,7 +10,7 @@
 
 1. 点上方 **Open in Colab** 徽章，在 Colab 菜单「代码执行程序 → 更改运行时类型」（英文界面：Runtime → Change runtime type）选 **L4 GPU**。
 2. 「代码执行程序 → 全部运行」（英文界面：Runtime → Run all），弹出「此笔记本不是由 Google 创作」时点「仍然运行」。不改任何设置会用示例图和示例文稿。
-3. 等浏览器自动下载 `talking_avatar.mp4`（默认带字幕）和字幕文件 `talking_avatar.srt`（开了去背时还有透明背景的 `talking_avatar_alpha.webm`），然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
+3. 等浏览器自动下载 `talking_avatar.mp4`（默认带字幕）和字幕文件 `talking_avatar.srt`、不带字幕的 `talking_avatar_nosub.mp4`（开了去背时还有透明背景的 `talking_avatar_alpha.webm`，选「绿幕」时还有绿幕图 `input_greenscreen.png`），然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
 
 ## 流程
 
@@ -28,15 +28,15 @@
         ▼
 ④ 对嘴：ComfyUI v0.43.0 + InfiniteTalk（Wan2.1 I2V 14B 480P）
    角色图按 ASPECT／CROP_POS 裁切缩放（默认 9:16 的 480×832）
-   （BG_REMOVE＝绿幕时：先用 BiRefNet 把背景换成纯绿，释放显存后才启动 ComfyUI）
+   （BG_REMOVE＝绿幕时：先用 BiRefNet 把背景换成纯绿（发丝先做前景色估计），释放显存后才启动 ComfyUI）
    → 每段 81 帧、重叠 9 帧往后延伸 → 长度跟配音走
         │
         ▼
-⑤ 合成：画面 + 原始配音（AAC）→ 烧进字幕（ASS＋ffmpeg）→ /content/output/talking_avatar.mp4 ＋ talking_avatar.srt → 自动下载
+⑤ 合成：画面 + 原始配音（AAC）→ 烧进字幕（ASS＋ffmpeg）→ /content/output/talking_avatar.mp4 ＋ talking_avatar.srt ＋ 不带字幕的 talking_avatar_nosub.mp4 → 自动下载
         │
         ▼
 ⑤-2 去背输出（BG_REMOVE 不是「关」时）：绿幕＝ffmpeg chromakey＋despill；逐帧＝每帧 BiRefNet
-   → talking_avatar_alpha.webm（VP9＋透明通道，不烧字幕）→ 自动下载
+   → talking_avatar_alpha.webm（VP9＋透明通道，不烧字幕）＋ 绿幕时的绿幕图 input_greenscreen.png → 自动下载
         │
         ▼
 ⑥ 只重做字幕（换字幕样式时才用；「全部运行」时会自动跳过）
@@ -105,7 +105,7 @@
 
 - **文字**：直接用文稿原文（不含句首语气括号），不做语音识别，所以不会有错字。
 - **时间**：按每句配音的实际长度加 `PAUSE_SEC` 推算。句间停顿时上一句字幕继续留着，直到下一句出现。
-- **长句**：一行放不下时自动切成几段轮流显示（优先在标点后切），每段时间按字数比例分配。
+- **长句**：一行放不下时自动切成几段轮流显示（优先在标点后切；只在词和词之间切，用 [jieba](https://github.com/fxsjy/jieba) 分词，「了、的、吗」这类助词不放行首；jieba 装不上时退回按字切），每段时间按字数比例分配。
 - 字号、边距、一行放几个字都按画面尺寸（notebook 的 `WIDTH`、`HEIGHT`）推算，不写死像素。
 
 在 ① 设置格「字幕」那一段调整（Colab 右侧表单有开关、滑杆和下拉选单）：
@@ -190,10 +190,10 @@
 | `BG_REMOVE` | 做法 | 优缺点 |
 |---|---|---|
 | 关（默认） | 不去背 | — |
-| 绿幕（推荐） | ④-3 对嘴前先用 BiRefNet 把角色图的背景换成纯绿色（用完马上释放显存）→ 对嘴 → ⑤-2 用 ffmpeg `chromakey` 扣掉绿色，再用 `despill` 压掉边缘的绿光 | 只多处理一张图。**这时 `talking_avatar.mp4` 的背景是绿色的。** 已知风险见「常见问题」 |
+| 绿幕（推荐） | ④-3 对嘴前先用 BiRefNet 把角色图的背景换成纯绿色（用完马上释放显存；合成到绿底前用 [pymatting](https://github.com/pymatting/pymatting) 做前景色估计，去掉发丝里混进来的原背景颜色）→ 对嘴 → ⑤-2 用 ffmpeg `chromakey` 扣掉绿色，再用 `despill` 压掉边缘的绿光 | 只多处理一张图。**这时 `talking_avatar.mp4` 的背景是绿色的。** 已知风险见「常见问题」 |
 | 逐帧 | 角色图照原样对嘴 → ⑤-2 先关掉 ComfyUI 释放显存，再对成品的每一帧跑 BiRefNet 得到透明遮罩 | `talking_avatar.mp4` 保留原背景；比绿幕慢（每一帧都要算），前后帧的边缘可能轻微闪动 |
 
-绿幕路线的扣色参数（`KEY_SIMILARITY`、`KEY_BLEND`、`DESPILL_MIX`）写在 ⑤-2 格开头，一般不用改。绿幕的实际色值会从第一帧的背景自动取。
+绿幕路线的扣色参数（`KEY_SIMILARITY`、`KEY_BLEND`、`DESPILL_MIX`、`DESPILL_BLUE`）写在 ⑤-2 格开头，一般不用改。绿幕的实际色值会从第一帧的背景自动取。⑤-2 会一并下载对嘴用的绿幕图 `input_greenscreen.png`：边缘不满意时拿它对照，绿幕图上就有毛边＝去背那一步的问题，绿幕图干净＝扣绿这一步的问题。
 
 ## 使用规范
 
@@ -265,6 +265,8 @@
 | chinese-wav2vec2-base fp16 | 音频特征 | HF `Kijai/wav2vec2_safetensors` | 托管仓库：MIT；上游：MIT | <https://huggingface.co/Kijai/wav2vec2_safetensors>、<https://huggingface.co/TencentGameMate/chinese-wav2vec2-base> |
 | Wan2.1 VAE bf16 | 视频编解码 | HF `Kijai/WanVideo_comfy` | 托管仓库：**未确认**（模型卡未标授权）；上游 Wan2.1：Apache-2.0 | <https://huggingface.co/Kijai/WanVideo_comfy>、<https://github.com/Wan-Video/Wan2.1/blob/main/LICENSE.txt> |
 | BiRefNet（代码＋权重） | 去背（`BG_REMOVE` 不是「关」时才下载） | HF `ZhengPeng7/BiRefNet` @ `e2bf8e44`（`trust_remote_code`，代码和权重都来自这个仓库） | MIT（2026-11-02 查证） | <https://huggingface.co/ZhengPeng7/BiRefNet>、<https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE> |
+| jieba 0.42.1 | 字幕切段时中文分词（开字幕且有长句要切时才安装） | PyPI `jieba==0.42.1` | MIT（2026-11-02 查证） | <https://github.com/fxsjy/jieba/blob/master/LICENSE> |
+| pymatting 1.1.16 | 绿幕路线的前景色估计（`BG_REMOVE`＝绿幕时才安装） | PyPI `pymatting==1.1.16` | MIT（2026-11-02 查证） | <https://github.com/pymatting/pymatting/blob/master/LICENSE.md> |
 | lightx2v I2V 480P 步数/CFG 蒸馏 LoRA rank64 | 加速（6 步） | HF `Kijai/WanVideo_comfy` | 托管仓库：**未确认**（模型卡未标授权）；上游 lightx2v 模型：Apache-2.0（按文件名对应，未逐字节核对） | <https://huggingface.co/Kijai/WanVideo_comfy>、<https://huggingface.co/lightx2v/Wan2.1-I2V-14B-480P-StepDistill-CfgDistill-Lightx2v>、<https://github.com/ModelTC/LightX2V/blob/main/LICENSE> |
 
 示例图 `examples/host.png` **由 AI 生成，为虚构人物，非真实人物**（说明见 [`examples/README.md`](examples/README.md)）。声音包 `voices/` 的 10 把声音由 VoxCPM2 音色设计生成，同样是虚构声音。
