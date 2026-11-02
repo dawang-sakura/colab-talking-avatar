@@ -10,7 +10,7 @@
 
 1. 点上方 **Open in Colab** 徽章，在 Colab 菜单「代码执行程序 → 更改运行时类型」（英文界面：Runtime → Change runtime type）选 **L4 GPU**。
 2. 「代码执行程序 → 全部运行」（英文界面：Runtime → Run all），弹出「此笔记本不是由 Google 创作」时点「仍然运行」。不改任何设置会用示例图和示例文稿。
-3. 等浏览器自动下载 `talking_avatar.mp4`（默认带字幕）和字幕文件 `talking_avatar.srt`、不带字幕的 `talking_avatar_nosub.mp4`（开了去背时还有透明背景的 `talking_avatar_alpha.webm`，选「绿幕」时还有绿幕图 `input_greenscreen.png`），然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
+3. 等浏览器自动下载 `talking_avatar_outputs.zip`（一次流程只自动下载这一个文件），解压后是 `talking_avatar.mp4`（默认带字幕）和字幕文件 `talking_avatar.srt`、不带字幕的 `talking_avatar_nosub.mp4`（开了去背时还有透明背景的 `talking_avatar_alpha.webm`，选「绿幕」时还有绿幕图 `input_greenscreen.png`；字幕和去背都关时直接下载 `talking_avatar.mp4`），然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
 
 ## 流程
 
@@ -32,11 +32,12 @@
    → 每段 81 帧、重叠 9 帧往后延伸 → 长度跟配音走
         │
         ▼
-⑤ 合成：画面 + 原始配音（AAC）→ 烧进字幕（ASS＋ffmpeg）→ /content/output/talking_avatar.mp4 ＋ talking_avatar.srt ＋ 不带字幕的 talking_avatar_nosub.mp4 → 自动下载
+⑤ 合成：画面 + 原始配音（AAC）→ 烧进字幕（ASS＋ffmpeg）→ /content/output/talking_avatar.mp4 ＋ talking_avatar.srt ＋ 不带字幕的 talking_avatar_nosub.mp4 → 去背关闭时在这里打包下载
         │
         ▼
 ⑤-2 去背输出（BG_REMOVE 不是「关」时）：绿幕＝ffmpeg chromakey＋despill；逐帧＝每帧 BiRefNet
-   → talking_avatar_alpha.webm（VP9＋透明通道，不烧字幕）＋ 绿幕时的绿幕图 input_greenscreen.png → 自动下载
+   → talking_avatar_alpha.webm（VP9＋透明通道，不烧字幕）＋ 绿幕时的绿幕图 input_greenscreen.png
+   → 连同 ⑤ 的文件打包成 talking_avatar_outputs.zip 下载（一次流程只自动下载一次）
         │
         ▼
 ⑥ 只重做字幕（换字幕样式时才用；「全部运行」时会自动跳过）
@@ -136,7 +137,7 @@
 
 ### 只重做字幕（换样式不用重跑）
 
-跑完一次后想换字幕样式，**在删除运行时之前**：改 ① 的字幕设置 → 运行 ① → 运行 **⑥ 只重做字幕** 格。它拿 `/content/output/` 里不带字幕的版本 `talking_avatar_nosub.mp4` 和字幕时间轴 `subtitle_timeline.json` 重新烧字幕，不重跑配音和对嘴。中途「重启会话」过的话，先依次运行 ①、②、③-2，再运行 ⑥（不要运行 ③-1，会重新配音）。
+跑完一次后想换字幕样式，**在删除运行时之前**：改 ① 的字幕设置 → 运行 ① → 运行 **⑥ 只重做字幕** 格。它拿 `/content/output/` 里不带字幕的版本 `talking_avatar_nosub.mp4` 和字幕时间轴 `subtitle_timeline.json` 重新烧字幕，不重跑配音和对嘴，新的成品和字幕打包成 `talking_avatar_resub.zip` 下载。中途「重启会话」过的话，先依次运行 ①、②、③-2，再运行 ⑥（不要运行 ③-1，会重新配音）。
 
 ### 字体
 
@@ -193,7 +194,7 @@
 | 绿幕（推荐） | ④-3 对嘴前先用 BiRefNet 把角色图的背景换成纯绿色（用完马上释放显存；合成到绿底前用 [pymatting](https://github.com/pymatting/pymatting) 做前景色估计，去掉发丝里混进来的原背景颜色）→ 对嘴 → ⑤-2 用 ffmpeg `chromakey` 扣掉绿色，再用 `despill` 压掉边缘的绿光 | 只多处理一张图。**这时 `talking_avatar.mp4` 的背景是绿色的。** 已知风险见「常见问题」 |
 | 逐帧 | 角色图照原样对嘴 → ⑤-2 先关掉 ComfyUI 释放显存，再对成品的每一帧跑 BiRefNet 得到透明遮罩 | `talking_avatar.mp4` 保留原背景；比绿幕慢（每一帧都要算），前后帧的边缘可能轻微闪动 |
 
-绿幕路线的扣色参数（`KEY_SIMILARITY`、`KEY_BLEND`、`DESPILL_MIX`、`DESPILL_BLUE`）写在 ⑤-2 格开头，一般不用改。绿幕的实际色值会从第一帧的背景自动取。⑤-2 会一并下载对嘴用的绿幕图 `input_greenscreen.png`：边缘不满意时拿它对照，绿幕图上就有毛边＝去背那一步的问题，绿幕图干净＝扣绿这一步的问题。
+绿幕路线的扣色参数（`KEY_SIMILARITY`、`KEY_BLEND`、`DESPILL_MIX`、`DESPILL_BLUE`）写在 ⑤-2 格开头，一般不用改。绿幕的实际色值会从第一帧的背景自动取。⑤-2 下载的 zip 里会附上对嘴用的绿幕图 `input_greenscreen.png`：边缘不满意时拿它对照，绿幕图上就有毛边＝去背那一步的问题，绿幕图干净＝扣绿这一步的问题。
 
 ## 使用规范
 
@@ -244,8 +245,14 @@
 **去背选了「绿幕」，扣出来有绿边，或背景有一块没扣掉？**
 绿幕路线有两个已知风险（尚未实测）：对嘴模型可能让绿色背景色偏或出现阴影，导致扣不干净；发丝等半透明边缘可能带一圈绿边。遇到时在 ① 把 `BG_REMOVE` 改成「逐帧」：最干净的做法是重新全部运行；不想重跑对嘴，也可以运行 ① 后只运行 ⑤-2（拿绿底的视频逐帧去背，发丝边缘可能还带一点绿）。
 
+**去背后头发外围有一圈毛边？**
+多半是角色图本身的问题：逆光（人物背后有强光、发丝边缘发亮）或头发蓬乱、飞毛多的图，去背后发丝外围容易留下一圈毛边（原图背景的颜色混在发丝里，换参数也去不干净）。主播图尽量选不逆光、头发整齐的；有这种图时建议换图。
+
 **透明 WebM 打开是黑底？**
 不是所有播放器都支持透明 WebM。放进支持透明视频的剪辑或合成软件里才看得到透明效果。
+
+**浏览器没有自动下载？**
+一次流程只会自动下载一次（文件多时打包成一个 zip），但 Chrome 还是可能拦截。网址栏右边出现下载被拦截的图标时，点它选允许；或到左侧「文件」面板的 `output` 文件夹，右键文件 →「下载」。
 
 **用完了怎么关？**
 「代码执行程序 → 断开连接并删除运行时」。第一次点可能先弹出警告，确认后要再点一次删除。
