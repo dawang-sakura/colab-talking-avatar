@@ -10,7 +10,7 @@
 
 1. 点上方 **Open in Colab** 徽章，在 Colab 菜单「代码执行程序 → 更改运行时类型」（英文界面：Runtime → Change runtime type）选 **L4 GPU**。
 2. 「代码执行程序 → 全部运行」（英文界面：Runtime → Run all），弹出「此笔记本不是由 Google 创作」时点「仍然运行」。不改任何设置会用示例图和示例文稿。
-3. 等浏览器自动下载 `talking_avatar.mp4`，然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
+3. 等浏览器自动下载 `talking_avatar.mp4`（默认带字幕）和字幕文件 `talking_avatar.srt`，然后「代码执行程序 → 断开连接并删除运行时」（英文界面：Runtime → Disconnect and delete runtime）。
 
 ## 流程
 
@@ -21,15 +21,19 @@
 ③ 配音：VoxCPM2
    声音包参考音（默认）；或音色设计（用文字描述造一把声音，只做一次，存成参考音）
    → 逐句可控克隆（每句 ≤80 字，超过自动切开）
-   → 句间插入停顿，接成一条音轨 voice.wav
+   → 句间插入停顿，接成一条音轨 voice.wav（同时记下每句的起止时间＝字幕时间轴）
    → 删除模型、释放显存
+③-2 字幕准备：下载字体、检查缺字（有问题在对嘴之前就报错）
         │
         ▼
 ④ 对嘴：ComfyUI v0.43.0 + InfiniteTalk（Wan2.1 I2V 14B 480P）
    角色图裁成 480×832 → 每段 81 帧、重叠 9 帧往后延伸 → 长度跟配音走
         │
         ▼
-⑤ 合成：画面 + 原始配音（AAC）→ /content/output/talking_avatar.mp4 → 自动下载
+⑤ 合成：画面 + 原始配音（AAC）→ 烧进字幕（ASS＋ffmpeg）→ /content/output/talking_avatar.mp4 ＋ talking_avatar.srt → 自动下载
+        │
+        ▼
+⑥ 只重做字幕（换字幕样式时才用；「全部运行」时会自动跳过）
 ```
 
 （② 是环境检查：显示 GPU 型号、取得示例文件、确认输入文件存在。）
@@ -48,6 +52,7 @@
 | `IMAGE_PATH` | `examples/host.png` | 角色图。换成自己的图：上传到 Colab 左侧「文件」面板（会放在 `/content/`），改成 `/content/你的图.png` |
 | `PROMPT` | 通用英文描述 | 对嘴画面的英文描述，可补充角色外观（发型、服装），减少配件消失 |
 | `LOW_VRAM` | `False` | 对嘴阶段爆显存时改成 `True`（ComfyUI `--novram`，更慢） |
+| `SUBTITLE` 等 | 开启 | 字幕开关、字体、字号、效果、位置、描边、颜色，见下方「字幕」 |
 | `ENABLE_VOICE_CLONE` 等 | 关闭 | 见下方「声音克隆」 |
 
 角色图建议：竖图、正面、闭嘴、脸够大、手不入镜。图会先裁成 480:832 比例（保留上方、裁掉下方），再缩成 480×832。
@@ -84,6 +89,61 @@
      - **填参考录音的逐字稿**（必须一字不差）→ 极致克隆：最像本人，但**不能**加语气括号（VoxCPM 官方不允许语气指令和 `prompt_text` 一起用），文稿里有语气括号会直接报错。
    - `I_HAVE_CONSENT = True`：表示你确认录音是你本人、或已取得当事人同意。**没改成 True 就开启克隆，notebook 会直接报错停止。**
 3. 开启克隆后 `VOICE` 和 `VOICE_DESC` 都不再使用。
+
+## 字幕（默认开启）
+
+成品默认把字幕烧进画面，另外给一份 `talking_avatar.srt`（可导入剪辑软件或上传到平台）。
+
+- **文字**：直接用文稿原文（不含句首语气括号），不做语音识别，所以不会有错字。
+- **时间**：按每句配音的实际长度加 `PAUSE_SEC` 推算。句间停顿时上一句字幕继续留着，直到下一句出现。
+- **长句**：一行放不下时自动切成几段轮流显示（优先在标点后切），每段时间按字数比例分配。
+- 字号、边距、一行放几个字都按画面尺寸（notebook 的 `WIDTH`、`HEIGHT`）推算，不写死像素。
+
+在 ① 设置格「字幕」那一段调整（Colab 右侧表单有开关、滑杆和下拉选单）：
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `SUBTITLE` | `True` | 字幕开关。关掉时成品不带字幕 |
+| `SUB_FONT` | `思源黑体（粗）` | 字体下拉选单，见下方字体表；选「自定义（上传字体文件）」改用 `SUB_FONT_FILE` |
+| `SUB_FONT_FILE` | `/content/my_font.ttf` | 自定义字体：把 `.ttf`／`.otf` 上传到左侧「文件」面板后填路径。请自行确认该字体允许你的用途（例如商用） |
+| `SUB_SIZE` | `100` | 字号（%）。100＝画面短边的 1/12（480×832 画面约 40 像素）；滑杆 50～200 |
+| `SUB_EFFECT` | `淡入` | 出现效果：无、淡入、淡入淡出、弹出、滑入、逐字（见下表） |
+| `SUB_POSITION` | `底部` | 底部、中间、顶部 |
+| `SUB_MARGIN` | `12` | 离画面下边缘（选「顶部」时是上边缘）的距离，占画面高度的 %；选「中间」时不用 |
+| `SUB_OUTLINE` | `8` | 描边粗细，占字号的 %；0＝不描边。默认是单层黑色描边 |
+| `SUB_COLOR` | `#FFFFFF` | 字的颜色，写成 `#RRGGBB` |
+| `SUB_OUTLINE_COLOR` | `#000000` | 描边颜色，写成 `#RRGGBB` |
+
+效果（都是 ASS 字幕的标准特效，由 ffmpeg 的 libass 画上去）：
+
+| 效果 | 看起来 |
+|---|---|
+| 无 | 直接出现、直接消失 |
+| 淡入 | 每段字幕约 0.2 秒淡淡出现（默认） |
+| 淡入淡出 | 出现和消失都淡入淡出 |
+| 弹出 | 从小放大、略超过一点再回到原大小 |
+| 滑入 | 从下方往上滑到定位，同时淡入 |
+| 逐字 | 按念的速度一个字一个字出现（按字数平均分配时间，是估算） |
+
+### 只重做字幕（换样式不用重跑）
+
+跑完一次后想换字幕样式，**在删除运行时之前**：改 ① 的字幕设置 → 运行 ① → 运行 **⑥ 只重做字幕** 格。它拿 `/content/output/` 里不带字幕的版本 `talking_avatar_nosub.mp4` 和字幕时间轴 `subtitle_timeline.json` 重新烧字幕，不重跑配音和对嘴。中途「重启会话」过的话，先依次运行 ①、②、③-2，再运行 ⑥（不要运行 ③-1，会重新配音）。
+
+### 字体
+
+都是开源、可商用的字体（SIL Open Font License 1.1），**不包含在本仓库里**，运行时从下列官方发布处下载。
+
+<!-- TODO（测试时核对）：下表下载网址与授权链接是 2026-11-02 依记忆写的，尚未实际下载核对；测试通过后删除本注释 -->
+
+| 下拉选项 | 字体 | 运行时下载来源 | 授权 |
+|---|---|---|---|
+| 思源黑体（粗） | Source Han Sans SC Bold | GitHub `adobe-fonts/source-han-sans`（release 分支） | [SIL OFL 1.1](https://github.com/adobe-fonts/source-han-sans/blob/master/LICENSE.txt) |
+| 霞鹜文楷 | LXGW WenKai Regular | GitHub `lxgw/LxgwWenKai` 最新 Release | [SIL OFL 1.1](https://github.com/lxgw/LxgwWenKai/blob/main/OFL.txt) |
+| 站酷快乐体 | ZCOOL KuaiLe | GitHub `google/fonts`（Google Fonts 官方仓库） | [SIL OFL 1.1](https://github.com/google/fonts/blob/main/ofl/zcoolkuaile/OFL.txt) |
+| 站酷小薇LOGO体 | ZCOOL XiaoWei | GitHub `google/fonts`（Google Fonts 官方仓库） | [SIL OFL 1.1](https://github.com/google/fonts/blob/main/ofl/zcoolxiaowei/OFL.txt) |
+| 站酷庆科黄油体 | ZCOOL QingKe HuangYou | GitHub `google/fonts`（Google Fonts 官方仓库） | [SIL OFL 1.1](https://github.com/google/fonts/blob/main/ofl/zcoolqingkehuangyou/OFL.txt) |
+
+③-2 会检查字体有没有收录文稿里的每个字，缺字时会列出来（烧进画面时那些字会被换成别的字体或显示成方框）。思源黑体收的字最全。
 
 ## 使用规范
 
@@ -123,12 +183,18 @@
 **声音不满意？**
 先在「声音包」试听，`VOICE` 换一把重跑；都不合适就选「自定义（用 VOICE_DESC）」，改 `VOICE_DESC` 或换 `SEED` 重跑（音色设计本来就每次不同）。
 
+**字幕和声音有点对不上？**
+字幕时间是按每句配音长度推算的；一句被切成几段时，每段时间按字数比例估，念得快慢不均时会有些偏差。把长句拆短（一行一句）最有效。
+
+**字幕想换样式？**
+不用重跑：改 ① 的字幕设置 → 运行 ① → 运行 ⑥（见「字幕 → 只重做字幕」）。删除运行时后就不能重做了。
+
 **用完了怎么关？**
 「代码执行程序 → 断开连接并删除运行时」。第一次点可能先弹出警告，确认后要再点一次删除。
 
 ## 第三方模型与授权
 
-本仓库的代码以 MIT 发布；下列组件**不包含在本仓库里**，是在 Colab 运行时从原始来源下载的，各自适用其授权。以下为作者 2026-10-31 查证的结果，使用前请以各来源页面为准。
+本仓库的代码以 MIT 发布；下列组件（以及「字幕」一节的字体）**不包含在本仓库里**，是在 Colab 运行时从原始来源下载的，各自适用其授权。以下为作者 2026-10-31 查证的结果，使用前请以各来源页面为准。
 
 | 组件 | 用途 | 运行时下载来源（commit 已固定） | 授权 | 查证出处 |
 |---|---|---|---|---|
