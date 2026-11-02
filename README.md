@@ -140,19 +140,19 @@
 
 ### 字体
 
-都是开源、可商用的字体（SIL Open Font License 1.1），**不包含在本仓库里**，运行时从下列官方发布处下载。
-
-<!-- TODO（测试时核对）：下表下载网址与授权链接是 2026-11-02 依记忆写的，尚未实际下载核对；测试通过后删除本注释 -->
+都是开源字体（除「霞鹜新晰黑」是 IPA Font License 1.0 外，其余均为 SIL Open Font License 1.1），**不包含在本仓库里**，运行时从下列官方发布处下载。网址都固定到具体版本（或固定分支上的文件），下载网址已于 2026-11-02 实际下载验证过；授权链接已于同日用 GitHub API 核对过各仓库里确实有对应的 LICENSE／OFL 文件。
 
 | 下拉选项 | 字体 | 运行时下载来源 | 授权 |
 |---|---|---|---|
 | 思源黑体（粗） | Source Han Sans SC Bold | GitHub `adobe-fonts/source-han-sans`（release 分支） | [SIL OFL 1.1](https://github.com/adobe-fonts/source-han-sans/blob/master/LICENSE.txt) |
-| 霞鹜文楷 | LXGW WenKai Regular | GitHub `lxgw/LxgwWenKai` 最新 Release | [SIL OFL 1.1](https://github.com/lxgw/LxgwWenKai/blob/main/OFL.txt) |
 | 站酷快乐体 | ZCOOL KuaiLe | GitHub `google/fonts`（Google Fonts 官方仓库） | [SIL OFL 1.1](https://github.com/google/fonts/blob/main/ofl/zcoolkuaile/OFL.txt) |
-| 站酷小薇LOGO体 | ZCOOL XiaoWei | GitHub `google/fonts`（Google Fonts 官方仓库） | [SIL OFL 1.1](https://github.com/google/fonts/blob/main/ofl/zcoolxiaowei/OFL.txt) |
-| 站酷庆科黄油体 | ZCOOL QingKe HuangYou | GitHub `google/fonts`（Google Fonts 官方仓库） | [SIL OFL 1.1](https://github.com/google/fonts/blob/main/ofl/zcoolqingkehuangyou/OFL.txt) |
+| 未来荧黑 Heavy | Glow Sans SC Normal Heavy | GitHub `welai/glow-sans` Release v0.93（压缩包约 64MB，只取其中的 Heavy 字重） | [SIL OFL 1.1](https://github.com/welai/glow-sans/blob/master/OFL.txt)（该仓库的程序代码是 MIT，字体文件是 OFL） |
+| 得意黑 | Smiley Sans Oblique | GitHub `atelier-anchor/smiley-sans` Release v2.0.1 | [SIL OFL 1.1](https://github.com/atelier-anchor/smiley-sans/blob/main/LICENSE) |
+| 寒蝉圆黑体 | ChillRoundM | GitHub `Warren2060/ChillRound` Release v1.805 | [SIL OFL 1.1](https://github.com/Warren2060/ChillRound/blob/main/LICENSE) |
+| 霞鹜新晰黑 | LXGW Neo XiHei | GitHub `lxgw/LxgwNeoXiHei` Release v1.308 | [IPA Font License 1.0](https://github.com/lxgw/LxgwNeoXiHei/blob/main/LICENSE.md)（**不是 OFL**） |
+| 霞鹜文楷 | LXGW WenKai Medium | GitHub `lxgw/LxgwWenKai` Release v1.530 | [SIL OFL 1.1](https://github.com/lxgw/LxgwWenKai/blob/main/OFL.txt) |
 
-③-2 会检查字体有没有收录文稿里的每个字，缺字时会列出来（烧进画面时那些字会被换成别的字体或显示成方框）。思源黑体收的字最全。
+③-2 会检查字体有没有收录文稿里的每个字，缺字时会列出来（烧进画面时那些字会被换成别的字体或显示成方框）。思源黑体收的字最全；寒蝉圆黑体只收 GB2312 的字，文稿里有生僻字时容易缺字。
 
 ## 画面比例
 
