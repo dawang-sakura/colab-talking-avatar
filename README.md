@@ -250,7 +250,7 @@
 - 字幕沿用上面「字幕」一节的设置（字体、字号、效果、颜色），时间用排好的实际时段；位置固定在主播和录影的交界附近（中心约在 `LAYOUT_ANCHOR_H + 40` 像素），`SUB_POSITION`、`SUB_MARGIN` 不使用。字号较大时整行往上收，下缘不进入 TikTok 右侧按钮列（约 x≥894、y≥915）。
 - 两句隔很久时，上一句字幕最多多留 `max(PAUSE_SEC, 1)` 秒就消失，不会一直挂着。
 - 照常只自动下载一次 `talking_avatar_outputs.zip`：成品 `talking_avatar.mp4`（1080×1920）、`talking_avatar.srt`、不带字幕的 `talking_avatar_nosub.mp4`，另加只有主播的对嘴片 `talking_avatar_host.mp4`（不带字幕）。
-- 成片较大，⑤ 不在 notebook 里预览（「只有主播」版面照旧预览），请看下载的 zip 里的 `talking_avatar.mp4`。
+- 成片较大，⑤ 和 ⑥ 都不在 notebook 里预览（「只有主播」版面照旧预览），请看下载的 zip 里的 `talking_avatar.mp4`。
 - ⑥ 只重做字幕照样能用（重烧的是 1080×1920 的合成版）。
 
 ## 使用规范
