@@ -176,7 +176,7 @@ notebook 的每一格都有标题和一两句说明。代码默认是收起来�
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dawang-sakura/colab-talking-avatar/blob/feat/rap/rap_song.ipynb)
 
-只要一首带 beat 的饶舌、不做视频时，用 `rap_song.ipynb`。整本只有五格：说明 → **歌词**（第一行 `%%writefile` 那行不要动，下面直接贴歌词，不需要任何引号）→ **① 选音色、随机号** → **② 生成饶舌** → 跑完之后。选 L4 GPU，贴好歌词、选好 ①，点「代码执行程序 → 全部运行」；跑完会出现播放条，并自动下载 mp3（320k）。无损的 wav 留在左边文件面板的 `rap_song/` 文件夹里。
+只要一首带 beat 的饶舌、不做视频时，用 `rap_song.ipynb`。整本只有五格：说明 → **歌词**（第一行 `%%writefile` 那行不要动，下面直接贴歌词，不需要任何引号）→ **① 选音色、随机号** → **② 生成饶舌** → 跑完之后。选 L4 GPU，贴好歌词、选好 ①，点「代码执行程序 → 全部运行」；跑完会出现播放条，并自动下载 mp3（320k）。无损的 wav 留在左边文件面板的 `rap_song/` 文件夹里。可以用 [verse]（主歌）、[chorus]（副歌）、[intro]（开头）、[outro]（结尾）分段，单独一行；分段标记不算字数。
 
 | 栏位 | 默认值 | 说明 |
 |---|---|---|
@@ -211,7 +211,7 @@ notebook 的每一格都有标题和一两句说明。代码默认是收起来�
 ### 要填什么
 
 1. **①-2 设置**：「声音」选「饶舌（AI 生成）」，「饶舌声线」选女声或男声。
-2. **① 台词**：改写成歌词，一行一句。
+2. **① 台词**：改写成歌词，一行一句。可以用 [verse]（主歌）、[chorus]（副歌）、[intro]（开头）、[outro]（结尾）分段，单独一行；分段标记不算字数。
 3. 点「全部运行」。其他设置（角色图、画面比例、版面、字幕）照常用。
 
 - 「画面描述」没改过的话，会自动换成「跟着节奏点头、肩膀律动」的英文描述（例如 `A female rapper performing to a hip hop beat, nodding head to the rhythm, shoulders bouncing, subtle body groove, facing camera.`）。你自己改过就照你写的。
