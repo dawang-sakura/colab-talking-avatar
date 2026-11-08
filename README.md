@@ -1,5 +1,8 @@
 # colab-talking-avatar
 
+> ### 只想生饶舌歌（不做视频）→ 用这本 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dawang-sakura/colab-talking-avatar/blob/feat/rap/rap_song.ipynb)
+> `rap_song.ipynb`：填歌词、选音色，点「全部运行」，出一首带 beat 的饶舌 mp3。说明见下方「[只生成饶舌歌](#只生成饶舌歌rap_songipynb)」。
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dawang-sakura/colab-talking-avatar/blob/main/talking_avatar.ipynb)
 
 给一张角色图，再给一段台词，就能做出会说话的主播视频。全程在 Google Colab（L4 GPU）上运行，你的电脑不用安装任何东西。
@@ -168,6 +171,37 @@ notebook 的每一格都有标题和一两句说明。代码默认是收起来�
      - **填入参考录音里说的话**（必须一字不差）→ 极致克隆：声音最像本人，但台词里**不能**加括号写语气（因为 VoxCPM 官方不支持同时使用语气指令和参考录音文字）。如果台词里写了语气括号，程序会直接报错。
    - 勾选「确认已获同意」：表示你确认录音是你本人的，或已取得当事人同意。**没勾就开启克隆，notebook 会直接报错停止。**
 3. 开启克隆后，「声音」和「声音描述」都不再使用。
+
+## 只生成饶舌歌（rap_song.ipynb）
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dawang-sakura/colab-talking-avatar/blob/feat/rap/rap_song.ipynb)
+
+只要一首带 beat 的饶舌、不做视频时，用 `rap_song.ipynb`。整本只有四格：说明 → **① 填歌词、选音色** → **② 生成饶舌** → 跑完之后。选 L4 GPU，填好 ①，点「代码执行程序 → 全部运行」；跑完会出现播放条，并自动下载 mp3（320k）。无损的 wav 留在左边文件面板的 `rap_song/` 文件夹里。
+
+| 栏位 | 默认值 | 说明 |
+|---|---|---|
+| 歌词 | 一份 8 句的示范歌词 | 一行一句。每句 8～10 字最稳，字越多越容易吞字。歌长约＝字数×0.23 秒＋5 秒，最长 3 分半（210 秒），超过只提醒、不挡 |
+| 音色 | 女·清亮 | 8 种：女·清亮、女·沙哑、女·甜美、女·御姐、男·低沉、男·少年、男·烟嗓、男·狠劲。音色是用文字提示 AI，效果有时明显有时不明显；不满意就换音色或换随机号再跑 |
+| 饶舌随机号 | `2025` | 随机号像抽卡：同一份歌词换个号，节奏和念法就不同；没办法先知道哪个号好听，生成出来听，不喜欢就换个号再跑 |
+
+- 换号、换音色再跑：改 ①，再点「全部运行」。装好的工具和下载好的模型会接着用，不会重装。每一次的成品都另存一个文件（例如 `rap_2025_f_bright.mp3`），不会盖掉上一次的。
+- 女·清亮示例（随机号 2025，歌词是《逆袭小红帽》）：[试听](voices/samples/rap_female.mp3)。换了歌词，同一个号唱出来也不一样，示例只供听声线（这段示例是加上音色提示词之前生成的）。其他音色的示例之后补。
+- 会等多久：作者估计第一次约 2～4 分钟（装工具、下载约 8GB 模型），之后再跑约 1～2 分钟（这一本还没在 Colab 上整本实测）。
+- **用完一定要点「代码执行程序 → 断开连接并删除运行时」。**
+- 给开发者：生成方式和口播那本的「饶舌模式」相同（ACE-Step v1 固定 commit `1bee4c9f`＋`ACE-Step/ACE-Step-v1-chinese-rap-LoRA`，`lora_weight` 2.0，参数相同，独立的 `uv venv -p 3.11` 环境，装在 `/root/rap_tools/`）；不分离人声、不做字幕、不对嘴。音色＝在原本的 prompt（`... female rap, ...`）后面加几个英文提示词：
+
+| 音色 | 加的提示词 |
+|---|---|
+| 女·清亮 | `bright, articulate` |
+| 女·沙哑 | `husky, raspy, gritty` |
+| 女·甜美 | `light, airy, high-pitched` |
+| 女·御姐 | `dark, sultry, velvety` |
+| 男·低沉 | `dark, thick, resonant` |
+| 男·少年 | `bright, light, energetic` |
+| 男·烟嗓 | `smoky, hoarse, raspy` |
+| 男·狠劲 | `gritty, shouted, hardcore rap` |
+
+提示词出处：ACE-Step 官方 [ZH_RAP_LORA.md](https://github.com/ace-step/ACE-Step/blob/1bee4c9f5b43e30995f8d4d33b3919197ce1bd68/ZH_RAP_LORA.md) 的 `vocal_timbre`、`techniques` 列表（`shouted` 属于 techniques）；`articulate`、`energetic`、`hardcore rap` 取自同一 commit 的 `examples/zh_rap_lora` prompt 范例。哪个中文音色对哪几个词，是作者挑的，效果还没逐一听过。
 
 ## 饶舌模式（默认关闭）
 
